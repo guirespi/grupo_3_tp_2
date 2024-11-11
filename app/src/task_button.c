@@ -34,27 +34,27 @@
 
 /********************** inclusions *******************************************/
 
-#include <stdio.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
 
-#include "main.h"
-#include "cmsis_os.h"
 #include "board.h"
-#include "logger.h"
+#include "cmsis_os.h"
 #include "dwt.h"
+#include "logger.h"
+#include "main.h"
 
-#include "task_ui.h"
 #include "ao_api.h"
+#include "task_ui.h"
 
 /********************** macros and definitions *******************************/
 
-#define TASK_PERIOD_MS_       (50)
+#define TASK_PERIOD_MS_ (50)
 
-#define BUTTON_PERIOD_MS_     (TASK_PERIOD_MS_)
+#define BUTTON_PERIOD_MS_ (TASK_PERIOD_MS_)
 #define BUTTON_PULSE_TIMEOUT_ (200)
 #define BUTTON_SHORT_TIMEOUT_ (1000)
-#define BUTTON_LONG_TIMEOUT_  (2000)
+#define BUTTON_LONG_TIMEOUT_ (2000)
 
 /********************** internal data declaration ****************************/
 
@@ -68,87 +68,73 @@ extern ao_t ao_ui;
 
 /********************** internal functions definition ************************/
 
-typedef enum
-{
-    BUTTON_TYPE_NONE,
-    BUTTON_TYPE_PULSE,
-    BUTTON_TYPE_SHORT,
-    BUTTON_TYPE_LONG,
-    BUTTON_TYPE__N,
+typedef enum {
+  BUTTON_TYPE_NONE,
+  BUTTON_TYPE_PULSE,
+  BUTTON_TYPE_SHORT,
+  BUTTON_TYPE_LONG,
+  BUTTON_TYPE__N,
 } button_type_t;
 
-static struct
-{
-    uint32_t counter;
+static struct {
+  uint32_t counter;
 } button;
 
-static void button_init_(void)
-{
-    button.counter = 0;
-}
+static void button_init_(void) { button.counter = 0; }
 
-static button_type_t button_process_state_(bool value)
-{
-    button_type_t ret = BUTTON_TYPE_NONE;
-    if (value)
-    {
-        button.counter += BUTTON_PERIOD_MS_;
+static button_type_t button_process_state_(bool value) {
+  button_type_t ret = BUTTON_TYPE_NONE;
+  if (value) {
+    button.counter += BUTTON_PERIOD_MS_;
+  } else {
+    if (BUTTON_LONG_TIMEOUT_ <= button.counter) {
+      ret = BUTTON_TYPE_LONG;
+    } else if (BUTTON_SHORT_TIMEOUT_ <= button.counter) {
+      ret = BUTTON_TYPE_SHORT;
+    } else if (BUTTON_PULSE_TIMEOUT_ <= button.counter) {
+      ret = BUTTON_TYPE_PULSE;
     }
-    else
-    {
-        if (BUTTON_LONG_TIMEOUT_ <= button.counter)
-        {
-            ret = BUTTON_TYPE_LONG;
-        }
-        else if (BUTTON_SHORT_TIMEOUT_ <= button.counter)
-        {
-            ret = BUTTON_TYPE_SHORT;
-        }
-        else if (BUTTON_PULSE_TIMEOUT_ <= button.counter)
-        {
-            ret = BUTTON_TYPE_PULSE;
-        }
-        button.counter = 0;
-    }
-    return ret;
+    button.counter = 0;
+  }
+  return ret;
 }
 
 /********************** external functions definition ************************/
 
-void task_button(void *argument)
-{
-    button_init_();
+void task_button(void *argument) {
+  button_init_();
 
-    while (true)
-    {
-        GPIO_PinState button_state;
-        button_state = HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN);
+  while (true) {
+    GPIO_PinState button_state;
+    button_state = HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN);
 
-        button_type_t button_type;
-        button_type = button_process_state_(button_state);
-        switch (button_type)
-        {
-        case BUTTON_TYPE_NONE:
-            break;
-        case BUTTON_TYPE_PULSE:
-            LOGGER_INFO("Button pulse");
-            ao_send_message(ao_ui, NULL, &((ao_ui_message_t){AO_UI_PRESS_PULSE}), sizeof(ao_ui_message_t));
-            break;
-        case BUTTON_TYPE_SHORT:
-            LOGGER_INFO("Button short");
-            ao_send_message(ao_ui, NULL, &((ao_ui_message_t){AO_UI_PRESS_SHORT}), sizeof(ao_ui_message_t));
-            break;
-        case BUTTON_TYPE_LONG:
-            LOGGER_INFO("Button long");
-            ao_send_message(ao_ui, NULL, &((ao_ui_message_t){AO_UI_PRESS_LONG}), sizeof(ao_ui_message_t));
-            break;
-        default:
-            LOGGER_INFO("Button error");
-            break;
-        }
-
-        vTaskDelay((TickType_t)(TASK_PERIOD_MS_ / portTICK_PERIOD_MS));
+    button_type_t button_type;
+    button_type = button_process_state_(button_state);
+    switch (button_type) {
+    case BUTTON_TYPE_NONE:
+      break;
+    case BUTTON_TYPE_PULSE:
+      LOGGER_INFO("Button pulse");
+      ao_send_message(ao_ui, NULL, &((ao_ui_message_t){AO_UI_PRESS_PULSE}),
+                      sizeof(ao_ui_message_t));
+      break;
+    case BUTTON_TYPE_SHORT:
+      LOGGER_INFO("Button short");
+      ao_send_message(ao_ui, NULL, &((ao_ui_message_t){AO_UI_PRESS_SHORT}),
+                      sizeof(ao_ui_message_t));
+      break;
+    case BUTTON_TYPE_LONG:
+      LOGGER_INFO("Button long");
+      ao_send_message(ao_ui, NULL, &((ao_ui_message_t){AO_UI_PRESS_LONG}),
+                      sizeof(ao_ui_message_t));
+      break;
+    default:
+      LOGGER_INFO("Button error");
+      break;
     }
+
+    vTaskDelay((TickType_t)(TASK_PERIOD_MS_ / portTICK_PERIOD_MS));
+  }
 }
 
 /********************** end of file ******************************************/

@@ -34,23 +34,23 @@
 
 /********************** inclusions *******************************************/
 
-#include <stdio.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
 
-#include "main.h"
-#include "cmsis_os.h"
 #include "board.h"
-#include "logger.h"
+#include "cmsis_os.h"
 #include "dwt.h"
+#include "logger.h"
+#include "main.h"
 
-#include "task_led.h"
 #include "ao_api.h"
+#include "task_led.h"
 
 /********************** macros and definitions *******************************/
 
-#define QUEUE_LENGTH_     (3)
-#define QUEUE_ITEM_SIZE_  (sizeof(ao_led_message_t))
+#define QUEUE_LENGTH_ (3)
+#define QUEUE_ITEM_SIZE_ (sizeof(ao_led_message_t))
 #define AO_LED_BLINK_TIME (1000) /*< milliseconds */
 
 /********************** internal data declaration ****************************/
@@ -59,41 +59,39 @@
 
 /********************** internal data definition *****************************/
 
-typedef struct
-{
-    GPIO_TypeDef * led_port;
-    uint16_t led_pin;
+typedef struct {
+  GPIO_TypeDef *led_port;
+  uint16_t led_pin;
 } ao_led_data_t;
 
 /********************** external data definition *****************************/
 
 /********************** internal functions definition ************************/
 
-static void ao_led_ev_f(ao_msg_t * ao_msg)
-{
-	ao_led_data_t * 	ao_data = (ao_led_data_t *) ao_get_data(ao_msg->receiver);
-	ao_led_message_t	msg 	= *((ao_led_message_t *)ao_msg->ao_msg);
+static void ao_led_ev_f(ao_msg_t *ao_msg) {
+  ao_led_data_t *ao_data = (ao_led_data_t *)ao_get_data(ao_msg->receiver);
+  ao_led_message_t msg = *((ao_led_message_t *)ao_msg->ao_msg);
 
-	if (AO_LED_MESSAGE_ON == msg)
-	{
-		HAL_GPIO_WritePin((GPIO_TypeDef *)ao_data->led_port, (uint16_t)ao_data->led_pin, GPIO_PIN_SET);
-	}
-	if(AO_LED_MESSAGE_OFF == msg)
-	{
-		HAL_GPIO_WritePin((GPIO_TypeDef *)ao_data->led_port, (uint16_t)ao_data->led_pin, GPIO_PIN_RESET);
-	}
+  if (AO_LED_MESSAGE_ON == msg) {
+    HAL_GPIO_WritePin((GPIO_TypeDef *)ao_data->led_port,
+                      (uint16_t)ao_data->led_pin, GPIO_PIN_SET);
+  }
+  if (AO_LED_MESSAGE_OFF == msg) {
+    HAL_GPIO_WritePin((GPIO_TypeDef *)ao_data->led_port,
+                      (uint16_t)ao_data->led_pin, GPIO_PIN_RESET);
+  }
 
-	// Free AO message from sender.
-	ao_sender_free_method(ao_msg->sender, ao_msg);
+  // Free AO message from sender.
+  ao_sender_free_method(ao_msg->sender, ao_msg);
 }
 
 /********************** external functions definition ************************/
 
-ao_t ao_led_init(GPIO_TypeDef *led_port, uint16_t led_pin)
-{
-	ao_led_data_t ao_led_data = {.led_pin = led_pin, .led_port = led_port};
-	ao_t ao = ao_init((uint8_t *)&ao_led_data, sizeof(ao_led_data), ao_led_ev_f, NULL, (AO_OP_NO_QUEUE|AO_OP_NO_TASK));
-	return ao;
+ao_t ao_led_init(GPIO_TypeDef *led_port, uint16_t led_pin) {
+  ao_led_data_t ao_led_data = {.led_pin = led_pin, .led_port = led_port};
+  ao_t ao = ao_init((uint8_t *)&ao_led_data, sizeof(ao_led_data), ao_led_ev_f,
+                    NULL, (AO_OP_NO_QUEUE | AO_OP_NO_TASK));
+  return ao;
 }
 
 /********************** end of file ******************************************/

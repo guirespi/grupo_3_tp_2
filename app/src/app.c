@@ -34,11 +34,12 @@
 
 /********************** inclusions *******************************************/
 
-#include "main.h"
-#include "cmsis_os.h"
-#include "logger.h"
-#include "dwt.h"
 #include "board.h"
+#include "cmsis_os.h"
+#include "dwt.h"
+#include "logger.h"
+#include "main.h"
+
 
 #include "task_button.h"
 #include "task_led.h"
@@ -61,28 +62,27 @@ ao_t ao_led_g;
 ao_t ao_led_b;
 
 /********************** external functions definition ************************/
-void app_init(void)
-{
-    BaseType_t status;
+void app_init(void) {
+  BaseType_t status;
 
-    // Initialize user interface
-    ao_ui = ao_ui_init();
-    // Initialize 'n' AO_leds
-    ao_led_r = ao_led_init(LED_RED_PORT, LED_RED_PIN);
-    ao_led_g = ao_led_init(LED_GREEN_PORT, LED_GREEN_PIN);
-    ao_led_b = ao_led_init(LED_BLUE_PORT, LED_BLUE_PIN);
+  // Initialize user interface
+  ao_ui = ao_ui_init();
+  // Initialize 'n' AO_leds
+  ao_led_r = ao_led_init(LED_RED_PORT, LED_RED_PIN);
+  ao_led_g = ao_led_init(LED_GREEN_PORT, LED_GREEN_PIN);
+  ao_led_b = ao_led_init(LED_BLUE_PORT, LED_BLUE_PIN);
 
-    // Create task button
-    status = xTaskCreate(task_button, "task_button", 128, NULL, tskIDLE_PRIORITY + 3, NULL);
+  // Create task button
+  status = xTaskCreate(task_button, "task_button", 128, NULL,
+                       tskIDLE_PRIORITY + 3, NULL);
 
-    while (pdPASS != status)
-    {
-        // error
-    }
+  while (pdPASS != status) {
+    // error
+  }
 
-    LOGGER_INFO("Application initialized");
+  LOGGER_INFO("Application initialized");
 
-    cycle_counter_init();
+  cycle_counter_init();
 }
 
 /********************** end of file ******************************************/
