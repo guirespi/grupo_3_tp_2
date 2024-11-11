@@ -79,6 +79,8 @@ static int ao_create_object(struct ao_t * ao, uint8_t * ao_data, uint8_t ao_data
 	else
 		ao->ao_task = NULL;
 
+	ao->used = true;
+
 	return AO_OK;
 }
 

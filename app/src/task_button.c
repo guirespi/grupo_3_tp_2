@@ -126,7 +126,6 @@ void task_button(void *argument)
 
         button_type_t button_type;
         button_type = button_process_state_(button_state);
-
         switch (button_type)
         {
         case BUTTON_TYPE_NONE:
