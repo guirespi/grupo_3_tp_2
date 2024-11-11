@@ -44,6 +44,7 @@ extern "C" {
 
 #include <stdbool.h>
 #include "cmsis_os.h"
+#include "ao_api.h"
 
 /********************** macros ***********************************************/
 
@@ -56,18 +57,19 @@ typedef enum
 	AO_UI_PRESS_LONG,
 }ao_ui_message_t;
 
-typedef struct
+typedef enum
 {
-	QueueHandle_t hqueue;
-}ao_ui_handle_t;
+	AO_UI_IDLE = 0,
+	AO_UI_LED_RED_ON,
+	AO_UI_LED_GREEN_ON,
+	AO_UI_LED_BLUE_ON,
+}ao_ui_state_t;
 
 /********************** external data declaration ****************************/
 
 /********************** external functions declaration ***********************/
 
-void ao_ui_init(ao_ui_handle_t* hao);
-
-bool ao_ui_send(ao_ui_handle_t* hao, ao_ui_message_t msg);
+ao_t ao_ui_init(void);
 
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus

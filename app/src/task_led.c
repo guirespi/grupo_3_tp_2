@@ -45,6 +45,7 @@
 #include "dwt.h"
 
 #include "task_led.h"
+#include "ao_api.h"
 
 /********************** macros and definitions *******************************/
 
@@ -58,62 +59,41 @@
 
 /********************** internal data definition *****************************/
 
+typedef struct
+{
+    GPIO_TypeDef * led_port;
+    uint16_t led_pin;
+} ao_led_data_t;
+
 /********************** external data definition *****************************/
 
 /********************** internal functions definition ************************/
 
-static void task_led(void *argument)
+static void ao_led_ev_f(ao_msg_t * ao_msg)
 {
-    TickType_t       xLastWakeTime;
-    ao_led_handle_t *hao = (ao_led_handle_t *)argument;
-    LOGGER_INFO("AO led task initialized");
+	ao_led_data_t * 	ao_data = (ao_led_data_t *) ao_get_data(ao_msg->receiver);
+	ao_led_message_t	msg 	= *((ao_led_message_t *)ao_msg->ao_msg);
 
-    // Initialise the xLastWakeTime variable with the current time.
+	if (AO_LED_MESSAGE_ON == msg)
+	{
+		HAL_GPIO_WritePin((GPIO_TypeDef *)ao_data->led_port, (uint16_t)ao_data->led_pin, GPIO_PIN_SET);
+	}
+	if(AO_LED_MESSAGE_OFF == msg)
+	{
+		HAL_GPIO_WritePin((GPIO_TypeDef *)ao_data->led_port, (uint16_t)ao_data->led_pin, GPIO_PIN_RESET);
+	}
 
-    while (true)
-    {
-        ao_led_message_t msg;
-        if (pdPASS == xQueueReceive(hao->hqueue, &msg, portMAX_DELAY))
-        {
-            if (AO_LED_MESSAGE_BLINK == msg)
-            {
-                LOGGER_INFO("New led blinking");
-                // Toogle 1 second on then off until new event for this AO led.
-                xLastWakeTime = xTaskGetTickCount();
-                HAL_GPIO_WritePin((GPIO_TypeDef *)hao->led_port, (uint16_t)hao->led_pin, GPIO_PIN_SET);
-                // Blink until
-                vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(AO_LED_BLINK_TIME));
-                HAL_GPIO_WritePin((GPIO_TypeDef *)hao->led_port, (uint16_t)hao->led_pin, GPIO_PIN_RESET);
-            }
-        }
-    }
+	// Free AO message from sender.
+	ao_sender_free_method(ao_msg->sender, ao_msg);
 }
 
 /********************** external functions definition ************************/
 
-bool ao_led_send(ao_led_handle_t *hao, ao_led_message_t msg)
+ao_t ao_led_init(GPIO_TypeDef *led_port, uint16_t led_pin)
 {
-    return (pdPASS == xQueueSend(hao->hqueue, (void *)&msg, 0));
-}
-
-void ao_led_init(ao_led_handle_t *hao, GPIO_TypeDef *led_port, uint16_t led_pin)
-{
-    hao->hqueue = xQueueCreate(QUEUE_LENGTH_, QUEUE_ITEM_SIZE_);
-    while (NULL == hao->hqueue)
-    {
-        // error
-    }
-
-    // Set port and pin for led
-    hao->led_port = led_port;
-    hao->led_pin  = led_pin;
-
-    BaseType_t status;
-    status = xTaskCreate(task_led, "task_ao_led", 128, (void * const)hao, tskIDLE_PRIORITY + 1, NULL);
-    while (pdPASS != status)
-    {
-        // error
-    }
+	ao_led_data_t ao_led_data = {.led_pin = led_pin, .led_port = led_port};
+	ao_t ao = ao_init(&ao_led_data, sizeof(ao_led_data), ao_led_ev_f, NULL, (AO_OP_NO_QUEUE|AO_OP_NO_TASK));
+	return ao;
 }
 
 /********************** end of file ******************************************/

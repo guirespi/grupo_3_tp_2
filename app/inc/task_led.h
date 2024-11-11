@@ -43,6 +43,7 @@ extern "C" {
 /********************** inclusions *******************************************/
 
 #include <stdint.h>
+#include "ao_api.h"
 #include "board.h"
 #include "cmsis_os.h"
 
@@ -58,20 +59,11 @@ typedef enum
   AO_LED_MESSAGE__N,
 } ao_led_message_t;
 
-typedef struct
-{
-    QueueHandle_t hqueue;
-    GPIO_TypeDef * led_port;
-    uint16_t led_pin;
-} ao_led_handle_t;
-
 /********************** external data declaration ****************************/
 
 /********************** external functions declaration ***********************/
 
-void ao_led_init(ao_led_handle_t* hao, GPIO_TypeDef * led_port, uint16_t led_pin);
-
-bool ao_led_send(ao_led_handle_t* hao, ao_led_message_t msg);
+ao_t ao_led_init(GPIO_TypeDef * led_port, uint16_t led_pin);
 
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus

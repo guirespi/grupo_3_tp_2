@@ -44,6 +44,8 @@
 #include "task_led.h"
 #include "task_ui.h"
 
+#include "ao_api.h"
+
 /********************** macros and definitions *******************************/
 
 /********************** internal data declaration ****************************/
@@ -54,23 +56,15 @@
 
 /********************** external data declaration *****************************/
 
-ao_led_handle_t ao_led_r;
-ao_led_handle_t ao_led_g;
-ao_led_handle_t ao_led_b;
-
-ao_ui_handle_t ao_ui;
-
 /********************** external functions definition ************************/
 void app_init(void)
 {
     BaseType_t status;
 
     // Initialize user interface
-    ao_ui_init(&ao_ui);
+
     // Initialize 'n' AO_leds
-    ao_led_init(&ao_led_r, LED_RED_PORT, LED_RED_PIN);
-    ao_led_init(&ao_led_g, LED_GREEN_PORT, LED_GREEN_PIN);
-    ao_led_init(&ao_led_b, LED_BLUE_PORT, LED_BLUE_PIN);
+
 
     // Create task button
     status = xTaskCreate(task_button, "task_button", 128, NULL, tskIDLE_PRIORITY + 3, NULL);

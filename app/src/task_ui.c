@@ -58,63 +58,96 @@
 
 /********************** internal data definition *****************************/
 
+static ao_ui_state_t ao_ui_state = AO_UI_IDLE;
+
 /********************** external data definition *****************************/
 
-extern ao_led_handle_t ao_led_r;
-extern ao_led_handle_t ao_led_b;
-extern ao_led_handle_t ao_led_g;
+extern ao_t ao_led_r;
+extern ao_t ao_led_b;
+extern ao_t ao_led_g;
 
 /********************** internal functions definition ************************/
 
+static void ao_ui_turn_off_previous_led(ao_t ao_ui, ao_ui_state_t ao_previous_state)
+{
+	ao_led_message_t ao_led_msg = AO_LED_MESSAGE_OFF;
+	if(ao_previous_state == AO_UI_LED_RED_ON)
+		ao_send_message(ao_led_r, ao_ui, &ao_led_msg, sizeof(ao_led_msg));
+
+	if(ao_previous_state == AO_UI_LED_GREEN_ON)
+		ao_send_message(ao_led_g, ao_ui, &ao_led_msg, sizeof(ao_led_msg));
+
+	if(ao_previous_state == AO_UI_LED_BLUE_ON)
+		ao_send_message(ao_led_b, ao_ui, &ao_led_msg, sizeof(ao_led_msg));
+}
+
 /********************** external functions definition ************************/
 
-void task_ui(void *argument)
+void ao_ui_ev_f(ao_msg_t * ao_msg)
 {
-    ao_ui_handle_t *hao = (ao_ui_handle_t *)argument;
-    LOGGER_INFO("User interface for led activate");
-    while (true)
-    {
-        ao_ui_message_t ao_message;
-        if (pdTRUE == xQueueReceive(hao->hqueue, (void *)&ao_message, portMAX_DELAY))
-        {
-            switch (ao_message)
-            {
-            case AO_UI_PRESS_PULSE:
-                ao_led_send(&ao_led_r, AO_LED_MESSAGE_BLINK);
-                break;
-            case AO_UI_PRESS_SHORT:
-                ao_led_send(&ao_led_g, AO_LED_MESSAGE_BLINK);
-                break;
-            case AO_UI_PRESS_LONG:
-                ao_led_send(&ao_led_b, AO_LED_MESSAGE_BLINK);
-                break;
-            default:
-                LOGGER_INFO("Unknown event for UI object");
-                break;
-            }
-        }
-    }
+	ao_ui_message_t ao_message = *(ao_ui_message_t *)ao_msg->ao_msg;
+	// For this example we will send to turn on the LED
+	ao_led_message_t ao_led_msg = AO_LED_MESSAGE_ON;
+	bool need_turn_off = false;
+	ao_ui_state_t ao_ui_previous = ao_ui_state;
+	ao_t ao_led_target = NULL;
+
+	// The AO receiver is the same AO for user interface (UI)
+	switch (ao_message)
+	{
+	case AO_UI_PRESS_PULSE:
+	{
+		if(ao_ui_state != AO_UI_LED_RED_ON)
+		{
+			need_turn_off = true;
+			ao_led_target = ao_led_r;
+			ao_ui_state = AO_UI_LED_RED_ON;
+		}
+		break;
+	}
+	case AO_UI_PRESS_SHORT:
+	{
+		if(ao_ui_state != AO_UI_LED_GREEN_ON)
+		{
+			need_turn_off = true;
+			ao_led_target = ao_led_g;
+			ao_ui_state = AO_UI_LED_GREEN_ON;
+		}
+		break;
+	}
+	case AO_UI_PRESS_LONG:
+	{
+		if(ao_ui_state != AO_UI_LED_BLUE_ON)
+		{
+			need_turn_off = true;
+			ao_led_target = ao_led_b;
+			ao_ui_state = AO_UI_LED_BLUE_ON;
+		}
+		break;
+	}
+	default:
+		LOGGER_INFO("Unknown event for UI object");
+		return;
+	}
+
+	// Turn off previous led based in previous UI state.
+	if(need_turn_off)
+		ao_ui_turn_off_previous_led(ao_msg->receiver, ao_ui_previous);
+
+	// Send message to led AO. If ao_led_target is null this part does/send nothing.
+	ao_send_message(ao_led_target, ao_msg->receiver, &ao_led_msg, sizeof(ao_led_msg));
 }
 
-bool ao_ui_send(ao_ui_handle_t *hao, ao_ui_message_t msg)
+static void ao_ui_free_f(ao_msg_t * ao_msg)
 {
-    return (pdPASS == xQueueSend(hao->hqueue, (void *)&msg, 0));
+	ao_generic_free_message(ao_msg);
 }
 
-void ao_ui_init(ao_ui_handle_t *hao)
-{
-    hao->hqueue = xQueueCreate(AO_UI_QUEUE_LENGTH_, AO_UI_QUEUE_ITEM_SIZE_);
-    while (NULL == hao->hqueue)
-    {
-        // error
-    }
 
-    BaseType_t status;
-    status = xTaskCreate(task_ui, "task_ao_ui", 128, (void * const)hao, tskIDLE_PRIORITY + 2, NULL);
-    while (pdPASS != status)
-    {
-        // error
-    }
+ao_t ao_ui_init(void)
+{
+	ao_t ao = ao_init(NULL, 0, ao_ui_ev_f, ao_ui_free_f, 0);
+	return ao;
 }
 
 /********************** end of file ******************************************/

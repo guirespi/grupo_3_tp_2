@@ -45,6 +45,7 @@
 #include "dwt.h"
 
 #include "task_ui.h"
+#include "ao_api.h"
 
 /********************** macros and definitions *******************************/
 
@@ -63,7 +64,7 @@
 
 /********************** external data definition *****************************/
 
-extern ao_ui_handle_t ao_ui;
+extern ao_t ao_ui;
 
 /********************** internal functions definition ************************/
 
@@ -132,15 +133,15 @@ void task_button(void *argument)
             break;
         case BUTTON_TYPE_PULSE:
             LOGGER_INFO("Button pulse");
-            ao_ui_send(&ao_ui, AO_UI_PRESS_PULSE);
+            ao_send_message(ao_ui, NULL, &((ao_ui_message_t){AO_UI_PRESS_PULSE}), sizeof(ao_ui_message_t));
             break;
         case BUTTON_TYPE_SHORT:
             LOGGER_INFO("Button short");
-            ao_ui_send(&ao_ui, AO_UI_PRESS_SHORT);
+            ao_send_message(ao_ui, NULL, &((ao_ui_message_t){AO_UI_PRESS_SHORT}), sizeof(ao_ui_message_t));
             break;
         case BUTTON_TYPE_LONG:
             LOGGER_INFO("Button long");
-            ao_ui_send(&ao_ui, AO_UI_PRESS_LONG);
+            ao_send_message(ao_ui, NULL, &((ao_ui_message_t){AO_UI_PRESS_LONG}), sizeof(ao_ui_message_t));
             break;
         default:
             LOGGER_INFO("Button error");
