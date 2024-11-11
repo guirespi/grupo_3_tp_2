@@ -35,7 +35,7 @@ static void ao_task(void * pv_parameters)
 		ao_msg_t * ao_msg = NULL;
 		if(xQueueReceive(ao->ao_queue, &ao_msg, portMAX_DELAY))
 		{
-			ao->ao_ev_f(ao_msg);
+			ao_msg->receiver->ao_ev_f(ao_msg);
 		}
 	}
 }

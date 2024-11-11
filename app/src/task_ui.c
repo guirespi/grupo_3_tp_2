@@ -134,7 +134,7 @@ void ao_ui_ev_f(ao_msg_t * ao_msg)
 	if(need_turn_off)
 		ao_ui_turn_off_previous_led(ao_msg->receiver, ao_ui_previous);
 
-	// Send message to led AO. If ao_led_target is null this part does/send nothing.
+	// Send message to led AO. If ao_led_target is null this part does/send nothing. The receiver is the ao_ui.
 	ao_send_message(ao_led_target, ao_msg->receiver, &ao_led_msg, sizeof(ao_led_msg));
 }
 

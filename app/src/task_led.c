@@ -92,7 +92,7 @@ static void ao_led_ev_f(ao_msg_t * ao_msg)
 ao_t ao_led_init(GPIO_TypeDef *led_port, uint16_t led_pin)
 {
 	ao_led_data_t ao_led_data = {.led_pin = led_pin, .led_port = led_port};
-	ao_t ao = ao_init(&ao_led_data, sizeof(ao_led_data), ao_led_ev_f, NULL, (AO_OP_NO_QUEUE|AO_OP_NO_TASK));
+	ao_t ao = ao_init((uint8_t *)&ao_led_data, sizeof(ao_led_data), ao_led_ev_f, NULL, (AO_OP_NO_QUEUE|AO_OP_NO_TASK));
 	return ao;
 }
 

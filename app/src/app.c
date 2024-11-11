@@ -55,6 +55,10 @@
 /********************** internal data definition *****************************/
 
 /********************** external data declaration *****************************/
+ao_t ao_ui;
+ao_t ao_led_r;
+ao_t ao_led_g;
+ao_t ao_led_b;
 
 /********************** external functions definition ************************/
 void app_init(void)
@@ -62,9 +66,11 @@ void app_init(void)
     BaseType_t status;
 
     // Initialize user interface
-
+    ao_ui = ao_ui_init();
     // Initialize 'n' AO_leds
-
+    ao_led_r = ao_led_init(LED_RED_PORT, LED_RED_PIN);
+    ao_led_g = ao_led_init(LED_GREEN_PORT, LED_GREEN_PIN);
+    ao_led_b = ao_led_init(LED_BLUE_PORT, LED_BLUE_PIN);
 
     // Create task button
     status = xTaskCreate(task_button, "task_button", 128, NULL, tskIDLE_PRIORITY + 3, NULL);
