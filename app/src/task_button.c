@@ -52,9 +52,10 @@
 #define TASK_PERIOD_MS_ (50)
 
 #define BUTTON_PERIOD_MS_ (TASK_PERIOD_MS_)
-#define BUTTON_PULSE_TIMEOUT_ (200)
-#define BUTTON_SHORT_TIMEOUT_ (1000)
-#define BUTTON_LONG_TIMEOUT_ (2000)
+#define BUTTON_MAX_IDLE_MS_ 	(10*1000)
+#define BUTTON_PULSE_TIMEOUT_ 	(200)
+#define BUTTON_SHORT_TIMEOUT_ 	(1000)
+#define BUTTON_LONG_TIMEOUT_ 	(2000)
 
 /********************** internal data declaration ****************************/
 
@@ -65,6 +66,7 @@
 /********************** external data definition *****************************/
 
 extern ao_t ao_ui;
+extern SemaphoreHandle_t os_sem_h;
 
 /********************** internal functions definition ************************/
 
@@ -78,6 +80,7 @@ typedef enum {
 
 static struct {
   uint32_t counter;
+  uint32_t counter_idle;
 } button;
 
 static void button_init_(void) { button.counter = 0; }
@@ -105,33 +108,74 @@ void task_button(void *argument) {
   button_init_();
 
   while (true) {
-    GPIO_PinState button_state;
-    button_state = HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN);
 
-    button_type_t button_type;
-    button_type = button_process_state_(button_state);
-    switch (button_type) {
-    case BUTTON_TYPE_NONE:
-      break;
-    case BUTTON_TYPE_PULSE:
-      LOGGER_INFO("Button pulse");
-      ao_send_message(ao_ui, NULL, &((ao_ui_message_t){AO_UI_PRESS_PULSE}),
-                      sizeof(ao_ui_message_t));
-      break;
-    case BUTTON_TYPE_SHORT:
-      LOGGER_INFO("Button short");
-      ao_send_message(ao_ui, NULL, &((ao_ui_message_t){AO_UI_PRESS_SHORT}),
-                      sizeof(ao_ui_message_t));
-      break;
-    case BUTTON_TYPE_LONG:
-      LOGGER_INFO("Button long");
-      ao_send_message(ao_ui, NULL, &((ao_ui_message_t){AO_UI_PRESS_LONG}),
-                      sizeof(ao_ui_message_t));
-      break;
-    default:
-      LOGGER_INFO("Button error");
-      break;
-    }
+	xSemaphoreTake(os_sem_h, portMAX_DELAY); // Critical section as this task can create and start destruction of resources.
+	{
+	    GPIO_PinState button_state;
+	    button_state = HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN);
+
+	    button_type_t button_type;
+	    button_type = button_process_state_(button_state);
+	    ao_ui_message_t ui_msg = AO_UI_PRESS_NONE;
+
+
+	    switch (button_type) {
+	    case BUTTON_TYPE_NONE:
+	    {
+	        button.counter_idle += BUTTON_PERIOD_MS_;
+	        if(button.counter_idle >= BUTTON_MAX_IDLE_MS_)
+	        {
+	        	if(ao_ui_get_state() != AO_UI_IDLE) //Avoid double destruction of UI object.
+	        	{
+	        		LOGGER_INFO("Button idle. Starting shutdown to save resources");
+	        		ui_msg = AO_UI_PRESS_IDLE;
+	        	}
+	        }
+	        break;
+	    }
+	    case BUTTON_TYPE_PULSE:
+	    {
+	      LOGGER_INFO("Button pulse");
+	      ui_msg = AO_UI_PRESS_PULSE;
+	      break;
+	    }
+	    case BUTTON_TYPE_SHORT:
+	    {
+	      LOGGER_INFO("Button short");
+	      ui_msg = AO_UI_PRESS_SHORT;
+	      break;
+	    }
+	    case BUTTON_TYPE_LONG:
+	    {
+	      LOGGER_INFO("Button long");
+	      ui_msg = AO_UI_PRESS_LONG;
+	      break;
+	    }
+	    default:
+	    {
+	      LOGGER_INFO("Button error");
+	      break;
+	    }
+	    }
+
+	    if(button_type != BUTTON_TYPE_NONE)
+	    {
+	    	//We receive a new external event. Re-allocate resources.
+	    	button.counter_idle = 0;
+	        if(ao_ui_get_state() == AO_UI_IDLE)
+	        {
+	        	LOGGER_INFO("Creating OS resources as external event happened");
+	        	ao_ui = ao_ui_init();
+	        }
+	    }
+
+	    if(ui_msg != AO_UI_PRESS_NONE)
+	    {
+	        ao_send_message(ao_ui, NULL, (uint8_t *)&ui_msg, sizeof(ui_msg));
+	    }
+
+		xSemaphoreGive(os_sem_h);
+	}
 
     vTaskDelay((TickType_t)(TASK_PERIOD_MS_ / portTICK_PERIOD_MS));
   }

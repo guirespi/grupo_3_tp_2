@@ -93,17 +93,20 @@ ao_t ao_init(uint8_t *ao_data, uint8_t ao_data_size, ao_ev_handler_t ao_ev_f,
 }
 
 void ao_deinit(ao_t ao) {
+
+  ao->used = false;
+  memset(ao->ao_data, 0, ao->ao_data_size);
+  ao->ao_data_size = 0;
+
   if (ao->ao_queue) {
     vQueueDelete(ao->ao_queue);
     ao->ao_queue = NULL;
   }
   if (ao->ao_task) {
-    vTaskDelete(ao->ao_task);
+	TaskHandle_t temp = ao->ao_task;
     ao->ao_task = NULL;
+    vTaskDelete(temp); // Make sure this is the last line because an AO can be de-init inside its handler
   }
-  ao->used = false;
-  memset(ao->ao_data, 0, ao->ao_data_size);
-  ao->ao_data_size = 0;
 }
 
 uint8_t *ao_get_data(ao_t ao) {

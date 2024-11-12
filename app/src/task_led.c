@@ -73,10 +73,12 @@ static void ao_led_ev_f(ao_msg_t *ao_msg) {
   ao_led_message_t msg = *((ao_led_message_t *)ao_msg->ao_msg);
 
   if (AO_LED_MESSAGE_ON == msg) {
+	LOGGER_INFO("Turning on AO led [Port:%p][Pin:%d]", ao_data->led_port, (int)ao_data->led_pin);
     HAL_GPIO_WritePin((GPIO_TypeDef *)ao_data->led_port,
                       (uint16_t)ao_data->led_pin, GPIO_PIN_SET);
   }
   if (AO_LED_MESSAGE_OFF == msg) {
+	LOGGER_INFO("Turning off AO led [Port:%p][Pin:%d]", ao_data->led_port, (int)ao_data->led_pin);
     HAL_GPIO_WritePin((GPIO_TypeDef *)ao_data->led_port,
                       (uint16_t)ao_data->led_pin, GPIO_PIN_RESET);
   }

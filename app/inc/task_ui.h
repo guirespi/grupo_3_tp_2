@@ -52,14 +52,18 @@ extern "C" {
 
 typedef enum
 {
-	AO_UI_PRESS_PULSE = 0,
+	AO_UI_PRESS_NONE = 0, /*< No event happened */
+	AO_UI_PRESS_PULSE,
 	AO_UI_PRESS_SHORT,
 	AO_UI_PRESS_LONG,
+	AO_UI_PRESS_IDLE, /*< Button was not pressed for to long. Shut down leds and send AO_UI_PRESS_DESTROY*/
+	AO_UI_PRESS_DESTROY, /*< Destroy AO ui and leds*/
 }ao_ui_message_t;
 
 typedef enum
 {
 	AO_UI_IDLE = 0,
+	AO_UI_READY,
 	AO_UI_LED_RED_ON,
 	AO_UI_LED_GREEN_ON,
 	AO_UI_LED_BLUE_ON,
@@ -70,6 +74,8 @@ typedef enum
 /********************** external functions declaration ***********************/
 
 ao_t ao_ui_init(void);
+
+ao_ui_state_t ao_ui_get_state(void);
 
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus
