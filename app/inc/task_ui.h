@@ -42,39 +42,48 @@ extern "C" {
 
 /********************** inclusions *******************************************/
 
-#include <stdbool.h>
-#include "cmsis_os.h"
 #include "ao_api.h"
+#include "cmsis_os.h"
+#include <stdbool.h>
 
 /********************** macros ***********************************************/
 
 /********************** typedef **********************************************/
 
-typedef enum
-{
-	AO_UI_PRESS_NONE = 0, /*< No event happened */
-	AO_UI_PRESS_PULSE,
-	AO_UI_PRESS_SHORT,
-	AO_UI_PRESS_LONG,
-	AO_UI_PRESS_IDLE, /*< Button was not pressed for to long. Shut down leds and send AO_UI_PRESS_DESTROY*/
-	AO_UI_PRESS_DESTROY, /*< Destroy AO ui and leds*/
-}ao_ui_message_t;
+typedef enum {
+  AO_UI_PRESS_NONE = 0, /*< No event happened */
+  AO_UI_PRESS_PULSE,    /*< Button pressed pulse */
+  AO_UI_PRESS_SHORT,    /*< Button pressed short*/
+  AO_UI_PRESS_LONG,     /*< Button pressed long */
+  AO_UI_PRESS_IDLE,     /*< Button was not press for to long */
+  AO_UI_PRESS_DESTROY,  /*< Destroy AO ui and leds*/
+} ao_ui_message_t;
 
-typedef enum
-{
-	AO_UI_IDLE = 0,
-	AO_UI_READY,
-	AO_UI_LED_RED_ON,
-	AO_UI_LED_GREEN_ON,
-	AO_UI_LED_BLUE_ON,
-}ao_ui_state_t;
+typedef enum {
+  AO_UI_IDLE = 0,     /*< Idle UI, not valid to use */
+  AO_UI_READY,        /*< UI ready */
+  AO_UI_LED_RED_ON,   /*< UI red led is on*/
+  AO_UI_LED_GREEN_ON, /*< UI green led is on*/
+  AO_UI_LED_BLUE_ON,  /*< UI blue led is on*/
+} ao_ui_state_t;
 
 /********************** external data declaration ****************************/
 
 /********************** external functions declaration ***********************/
 
+/**
+ * @brief Initialize UI AO.
+ *
+ * @note This functions initialize the related leds to the application.
+ *
+ * @return ao_t AO UI instance.
+ */
 ao_t ao_ui_init(void);
-
+/**
+ * @brief Get AO UI state.
+ *
+ * @return ao_ui_state_t UI state.
+ */
 ao_ui_state_t ao_ui_get_state(void);
 
 /********************** End of CPP guard *************************************/
@@ -84,4 +93,3 @@ ao_ui_state_t ao_ui_get_state(void);
 
 #endif /* TASK_UI_H_ */
 /********************** end of file ******************************************/
-

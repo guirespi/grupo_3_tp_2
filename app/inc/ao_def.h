@@ -10,14 +10,20 @@
 
 /* AO general configuration */
 
-#define AO_MAX_MSG_SIZE 	(4)
-#define AO_MAX_DATA_SIZE 	(8)
-#define AO_MAX_OBJECTS 		(4)
-#define AO_MAX_QUEUE_MSG	(3)
+/*< AO max message size to send */
+#define AO_MAX_MSG_SIZE (4)
+/*< AO max aditional data size */
+#define AO_MAX_DATA_SIZE (8)
+/*< AO max static object allowed */
+#define AO_MAX_OBJECTS (4)
+/*< AO max events received */
+#define AO_MAX_QUEUE_MSG (3)
 
 /* AO option flags for initialize objects */
 
-#define AO_OP_NO_QUEUE 		(1<<0)
-#define AO_OP_NO_TASK 		(1<<1)
+/*< AO does not create a queue for events */
+#define AO_OP_NO_QUEUE (1 << 0)
+/*< AO does not create a task for events */
+#define AO_OP_NO_TASK (1 << 1)
 
 #endif /* INC_AO_DEF_H_ */

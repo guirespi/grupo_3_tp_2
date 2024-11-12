@@ -25,16 +25,39 @@ typedef struct {
 
 static ao_sys_t ao_sys;
 
+static void ao_task(void *pv_parameters);
+static int ao_create_object(struct ao_t *ao, uint8_t *ao_data,
+                            uint8_t ao_data_size, ao_ev_handler_t ao_ev_f,
+                            ao_free_handler_t ao_free_f, ao_op_t ao_op);
+
+/**
+ * @brief AO generic task.
+ *
+ * @param pv_parameters AO instance.
+ */
 static void ao_task(void *pv_parameters) {
   ao_t ao = (ao_t)pv_parameters;
   for (;;) {
     ao_msg_t *ao_msg = NULL;
     if (xQueueReceive(ao->ao_queue, &ao_msg, portMAX_DELAY)) {
+      // Executes receiver handler and sends message.
       ao_msg->receiver->ao_ev_f(ao_msg);
     }
   }
 }
 
+/**
+ * @brief Creates/Allocate an AO instance.
+ *
+ * @param ao AO pointer where instance will be passed.
+ * @param ao_data AO aditional data.
+ * @param ao_data_size AO aditional data size.
+ * @param ao_ev_f AO event handler.
+ * @param ao_free_f AO free message handler.
+ * @param ao_op AO operation flags.
+ * @return int
+ * 				- AO_OK if no error.
+ */
 static int ao_create_object(struct ao_t *ao, uint8_t *ao_data,
                             uint8_t ao_data_size, ao_ev_handler_t ao_ev_f,
                             ao_free_handler_t ao_free_f, ao_op_t ao_op) {
@@ -103,9 +126,10 @@ void ao_deinit(ao_t ao) {
     ao->ao_queue = NULL;
   }
   if (ao->ao_task) {
-	TaskHandle_t temp = ao->ao_task;
+    TaskHandle_t temp = ao->ao_task;
     ao->ao_task = NULL;
-    vTaskDelete(temp); // Make sure this is the last line because an AO can be de-init inside its handler
+    vTaskDelete(temp); // Make sure this is the last line because an AO can be
+                       // de-init inside its handler
   }
 }
 
@@ -146,6 +170,7 @@ int ao_send_message(ao_t receiver, ao_t sender, uint8_t *ao_msg,
   memcpy(ao_msg_o->ao_msg, ao_msg, ao_msg_size);
   ao_msg_size = ao_msg_size;
 
+  // Give priority to receiver queue before sender.
   QueueHandle_t hqueue =
       receiver->ao_queue == NULL ? sender->ao_queue : receiver->ao_queue;
 

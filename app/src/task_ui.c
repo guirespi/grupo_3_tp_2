@@ -119,34 +119,35 @@ static void ao_ui_ev_f(ao_msg_t *ao_msg) {
     }
     break;
   }
-  case AO_UI_PRESS_IDLE:
-  {
-	  xSemaphoreTake(os_sem_h, portMAX_DELAY); // Critical section. Start resource destruction
-	  {
-		  LOGGER_INFO("User interface idle. Start destruction");
-		  need_turn_off = true;
-		  need_destroy = true;
-	  }
-	  break;
+  case AO_UI_PRESS_IDLE: {
+    xSemaphoreTake(
+        os_sem_h,
+        portMAX_DELAY); // Critical section. Start resource destruction
+    {
+      LOGGER_INFO("User interface idle. Start destruction");
+      need_turn_off = true;
+      need_destroy = true;
+    }
+    break;
   }
-  case AO_UI_PRESS_DESTROY:
-  {
-	  ao_deinit(ao_led_r);
-	  ao_deinit(ao_led_g);
-	  ao_deinit(ao_led_b);
-	  ao_t ao_ui = ao_msg->receiver;
-	  ao_generic_free_message(ao_msg); //The message can be free here because the receiver is the sender (UI).
-	  ao_ui_state = AO_UI_IDLE; // AO is in idle state.
+  case AO_UI_PRESS_DESTROY: {
+    ao_deinit(ao_led_r);
+    ao_deinit(ao_led_g);
+    ao_deinit(ao_led_b);
+    ao_t ao_ui = ao_msg->receiver;
+    ao_generic_free_message(ao_msg); // The message can be free here because the
+                                     // receiver is the sender (UI).
+    ao_ui_state = AO_UI_IDLE;        // AO is in idle state.
 
-	  xSemaphoreGive(os_sem_h); //Finally leave control to task button again as we almos finis destroying resources.
+    xSemaphoreGive(os_sem_h); // Finally leave control to task button again as
+                              // we almos finis destroying resources.
 
-	  LOGGER_INFO("Finish destroying User Interface");
+    LOGGER_INFO("Finish destroying User Interface");
 
-	  ao_deinit(ao_ui); /*< End of task. No more execution after this point*/
-	  break;
+    ao_deinit(ao_ui); /*< End of task. No more execution after this point*/
+    break;
   }
-  default:
-  {
+  default: {
     LOGGER_INFO("Unknown event for UI object");
     return;
   }
@@ -157,10 +158,9 @@ static void ao_ui_ev_f(ao_msg_t *ao_msg) {
     ao_ui_turn_off_previous_led(ao_msg->receiver, ao_ui_previous);
 
   // Destroy user interface to save resources.
-  if(need_destroy)
-  {
-	 ao_ui_message_t ui_msg = AO_UI_PRESS_DESTROY;
-	 ao_send_message(ao_msg->receiver, NULL, (uint8_t *)&ui_msg, sizeof(ui_msg));
+  if (need_destroy) {
+    ao_ui_message_t ui_msg = AO_UI_PRESS_DESTROY;
+    ao_send_message(ao_msg->receiver, NULL, (uint8_t *)&ui_msg, sizeof(ui_msg));
   }
 
   // Send message to led AO. If ao_led_target is null this part does/send
@@ -171,10 +171,7 @@ static void ao_ui_ev_f(ao_msg_t *ao_msg) {
 
 static void ao_ui_free_f(ao_msg_t *ao_msg) { ao_generic_free_message(ao_msg); }
 
-ao_ui_state_t ao_ui_get_state(void)
-{
-	return ao_ui_state;
-}
+ao_ui_state_t ao_ui_get_state(void) { return ao_ui_state; }
 
 ao_t ao_ui_init(void) {
   // Initialize User Interface AO.

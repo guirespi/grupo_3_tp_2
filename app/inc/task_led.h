@@ -42,17 +42,16 @@ extern "C" {
 
 /********************** inclusions *******************************************/
 
-#include <stdint.h>
 #include "ao_api.h"
 #include "board.h"
 #include "cmsis_os.h"
+#include <stdint.h>
 
 /********************** macros ***********************************************/
 
 /********************** typedef **********************************************/
 
-typedef enum
-{
+typedef enum {
   AO_LED_MESSAGE_ON,
   AO_LED_MESSAGE_OFF,
   AO_LED_MESSAGE_BLINK,
@@ -63,7 +62,14 @@ typedef enum
 
 /********************** external functions declaration ***********************/
 
-ao_t ao_led_init(GPIO_TypeDef * led_port, uint16_t led_pin);
+/**
+ * @brief Initialize AO led.
+ *
+ * @param led_port Led port.
+ * @param led_pin Led pin.
+ * @return ao_t AO instance returned if Ok.
+ */
+ao_t ao_led_init(GPIO_TypeDef *led_port, uint16_t led_pin);
 
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus
@@ -72,4 +78,3 @@ ao_t ao_led_init(GPIO_TypeDef * led_port, uint16_t led_pin);
 
 #endif /* TASK_LED_H_ */
 /********************** end of file ******************************************/
-
